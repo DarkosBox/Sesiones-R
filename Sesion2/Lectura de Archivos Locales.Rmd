@@ -1,0 +1,137 @@
+---
+title       : Introducción a R
+subtitle    : Lectura de archivos locales
+author      : Inteligencia de Negocios
+date        : "`r format(Sys.time(), '%d %B %Y')`"
+logo        : logo.png
+css         : style.css
+output      : 
+  ioslides_presentation:
+    widescreen: true
+    transition: slower
+    smaller: true
+    smart: true
+---
+
+# Archivos Planos
+
+## Lectura de archivos planos.
+
+* Es la principal función de lectura de datos en R
+* Es flexible y robusta pero requiere la especificación de parámetros
+* Lee los datos y los carga a la memoria RAM - grandes volúmenes de datos pueden generar problemas
+* Parámetros: _file_, _header_, _sep_, _row.names_, _nrows_
+* Similares: _read.csv()_, _read.csv2()_
+
+## Ejemplo (Cargue de datos)
+
+```{r, error=TRUE}
+cameraData <- read.table("./data/cameras.csv")
+head(cameraData)
+```
+
+## Ejemplo (Cargue de datos)
+
+```{r}
+cameraData <- read.table("./data/cameras.csv",sep=",",header=TRUE)
+head(cameraData)
+```
+
+## Example: (Función read.csv)
+
+Los valores por defecto de la función son _sep=","_ and _header=TRUE_ 
+
+```{r,dependson="data"}
+cameraData <- read.csv("./data/cameras.csv")
+head(cameraData)
+```
+
+## Otros parámetros de importancia
+
+* _dec_ - Especifica el separador decimal
+* _quote_ - especifica si las cadenas de caracteres están encerradas en comillas. quote="" significa sin comillas.
+* _na.strings_ - Especifica uno mas caracteres que deben ser tratados como valores ausentes.
+* _stringsAsFactors_ - Especifica si las cadenas son interpretadas como factores o como caracteres
+* _nrows_ - Cuantas filas deben ser leídas (ej. nrows=10 lee 10 registros).
+* _skip_ - Número de filas a excluir en la lectura de datos
+
+## Notas
+
+* La función _write.csv_ almacenará un archivo plano con parámetros análogos.
+* Usualmente las fechas son interpretadas como caracteres. Es necesario hacer la conversión con la función `as.Date()`
+
+
+# Archivos de Excel
+
+## Lectura de archivos de Excel (xlsx)
+
+```{r xlsx}
+library(openxlsx)
+cameraData <- read.xlsx("./data/cameras.xlsx", sheet=1, colNames=TRUE)
+head(cameraData)
+```
+
+## Lectura de Filas y Columnas Específicas
+
+```{r}
+colIndex <- 2:3
+rowIndex <- 1:4
+cameraDataSubset <- read.xlsx("./data/cameras.xlsx",sheet=1,
+                              rows = colIndex,cols = rowIndex)
+cameraDataSubset
+```
+
+## Notas
+
+* La función _write.xlsx_ almacena un archivo de excel con parámetros análogos.
+* _read.xlsx2_ es más rápida que _read.xlsx_ lastimosamente puede generar resultados inestables. 
+* El paquete [XLConnect](http://cran.r-project.org/web/packages/XLConnect/index.html) tiene mas control para la escritura de archivos Excel.
+* La [documentación de XLConnect](http://cran.r-project.org/web/packages/XLConnect/vignettes/XLConnect.pdf) describe exhaustivamente la funcionalidad del paquete
+* Es aconsejable almacenar los datos, bien sea en bases de datos o en archivos planos (.csv, .tab, .txt) ya que son más fáciles de distribuir
+
+# Paquete data.table
+
+## data.table
+
+* Hereda las funcionalidades de data.frame
+* Todas las funciones que aceptan data.frame funcionan con data.table
+* Escrito en C, por lo cual es más rápido
+* Mucho más eficiente en operaciones como filtros, agrupaciones, actualizaciones, etc.
+
+## Crea tablas de datos tal como o hace un DataFrame
+
+```{r init}
+library(data.table)
+DF = data.frame(x=rnorm(9),y=rep(c("a","b","c"),each=3),z=rnorm(9))
+head(DF,3)
+DT = data.table(x=rnorm(9),y=rep(c("a","b","c"),each=3),z=rnorm(9))
+head(DT,3)
+```
+
+## Lectura rápida
+
+```{r,cache=TRUE}
+big_df <- data.frame(x=rnorm(1E6), y=rnorm(1E6))
+file <- tempfile()
+write.table(big_df, file=file, row.names=FALSE, col.names=TRUE, sep="\t", quote=FALSE)
+system.time(fread(file))
+system.time(read.table(file, header=TRUE, sep="\t"))
+```
+
+## Notas
+
+* [Referencias y Adiciones](https://github.com/Rdatatable/data.table)
+* [Diferencias entre data.table y data.frame](http://stackoverflow.com/questions/13618488/what-you-can-do-with-data-frame-that-you-cant-in-data-table)
+
+
+# Lectura desde otras fuentes
+
+## Lesctura desde otras fuentes
+
+R tiene la capacidad de leer múltiples fuentes de información en diferentes formatos. Por ejemplo:
+
+* [XML: Extensible markup language](http://en.wikipedia.org/wiki/XML): [Paquete XML](https://cran.r-project.org/web/packages/XML/XML.pdf).
+* [JSON: Javascript Object Notation](http://en.wikipedia.org/wiki/JSON): [Paquete jsonlite](https://cran.r-project.org/web/packages/jsonlite/jsonlite.pdf).
+* [MySQL](https://www.mysql.com/): [Paquete RMySQL](https://cran.r-project.org/web/packages/RMySQL/RMySQL.pdf).
+* Un largo etc.
+

@@ -1,0 +1,390 @@
+---
+title       : Introducción a R
+subtitle    : Manipulación de Datos
+author      : Inteligencia de Negocios
+date        : "`r format(Sys.time(), '%d %B %Y')`"
+logo        : logo.png
+css         : style.css
+output      : 
+  ioslides_presentation:
+    widescreen: true
+    transition: slower
+    smaller: true
+    smart: true
+---
+
+# Manipulación de datos con el paquete base
+
+## Filtros (subsetting) 
+
+```{r subsetting}
+set.seed(13435)
+X <- data.frame("var1"=sample(1:5),"var2"=sample(6:10),"var3"=sample(11:15))
+X <- X[sample(1:5),]
+X$var2[c(1,3)] = NA
+X
+```
+
+## Filtros (subsetting) 
+
+```{r ,dependson="subsetting"}
+X[,1]
+X[,"var1"]
+X[1:2,"var2"]
+```
+
+## Operadores Lógicos
+
+```{r ,dependson="subsetting"}
+X[(X$var1 <= 3 & X$var3 > 11),]
+X[(X$var1 <= 3 | X$var3 > 15),]
+```
+
+## Ordenamiento
+
+```{r ,dependson="subsetting"}
+sort(X$var1)
+sort(X$var1,decreasing=TRUE)
+sort(X$var2,na.last=TRUE)
+```
+
+## Ordenamiento
+
+```{r ,dependson="subsetting"}
+X[order(X$var1),]
+```
+
+## Adicion de Columnas
+
+```{r,dependson="subsetting"}
+X$var4 <- rnorm(5)
+X
+```
+
+## Adición de Columnas
+
+```{r,dependson="subsetting"}
+Y <- cbind(X,rnorm(5))
+Y
+```
+
+# Manipulación de datos con dplyr y tidyr
+
+## Por qué usar dplyr y tidyr?
+
+* Rapidez - dplyr y tidyr transforman la base de datos de manera rápida y eficiente computacionalmente.
+* Legibilidad - La sintaxis es directa y de fácil lectura.
+* Encadenamiento - Múltiples instrucciones dentro de una misma estructura
+* Pueden ser usados para manipular fuentes externas sin necesidad de cambiar de lenguaje.
+
+## Tidy Data
+
+En general, es deseable tener las bases de datos en formato "tidy".
+
+En conjuntos "tidy:
+
+* Cada variable forma una columna
+* Cada observación es una fila
+* Cada tipo de unidad observacional forma una tabla
+
+
+## Dplyr
+
+dplyr tiene el objetivo de ser una gramática para la manipulación de datos. Se definen los siguientes "verbos":
+
+* `filter()` filtros basados en criterios lógicos
+* `select()` Selección de columnas
+* `arrange()` Ordenar las filas según alguna variable
+* `rename()` renombrar columnas
+* `group_by()` Agrupa los datos según variables en común para realizar cálculos
+* `mutate()` Crear una nueva variable
+* `summarize()` sumarizar valores a una sola fila por grupo
+
+Donde los nombres de las variables se usan sin comillas.
+
+## Filter
+
+```{r, warning=FALSE, message=FALSE}
+# filter(data, condicion1, condicion2, ....)
+library(dplyr)
+data(iris)
+names(iris)
+
+filtro1<-filter(iris, Species=="virginica")
+head(filtro1, 3)
+
+```
+
+## Filter
+
+```{r}
+filtro2<-filter(iris, Species=="virginica"|Sepal.Length<6)
+head(filtro2, 3)
+
+filtro3<-filter(iris, Species=="virginica"|Sepal.Length<6, Species=="versicolor" | Petal.Length>4)
+head(filtro3, 3)
+
+```
+
+## Select
+```{r}
+# select(data, var1, var2, ....)
+library(dplyr)
+
+seleccion1 <- select(iris, Sepal.Length, Especie=Species) # Renombrar Columnas dentro del Select
+seleccion2 <- select(iris, 1, 5) # Seleccionar el numero de la columna
+seleccion3 <- select(iris, c(1,5)) # Equivalente a la línea anterior
+seleccion4 <- select(iris, -1, -3) # Excluir las columnas 1 y 3
+seleccion5 <- select(iris, -c(Sepal.Length)) # Excluir la columna Sepal.Length
+```
+
+## Arrange
+
+```{r}
+# arrange(data, [desc(]var1, [desc(]var2, ....)
+library(dplyr)
+
+orden1 <- arrange(iris, desc(Petal.Width)) # Ordenamiento Descentente
+head(orden1, 3)
+
+# Por defecto el sentido del ordenamiento es descendente.
+orden2 <- arrange(iris, Petal.Width) # Ordenamiento ascendente
+head(orden2, 3)
+
+
+```
+
+## Rename
+
+```{r}
+# rename(data, new_name=old_name, ....)
+library(dplyr)
+
+rename1 <- select(iris, Especie=Species)
+```
+
+## Group_By
+
+```{r}
+# group_by(data, var1, var2, ....)
+library(dplyr)
+```
+
+Esta función se usa generalmente en conjunto con las las funciones mutate() para calcular una variable para cada grupo o summarize() para calcular medidas de agregación en cada grupo.
+
+En ocasiones en necesario desagrupar las variables del conjunto de datos para poder hacer modificaciones adicionales. Esto se hace con la función `ungroup()`
+
+## Mutate
+
+```{r}
+# mutate(data, new_var1=[expression], new_var2=[expression])
+library(dplyr)
+
+mutar1<-mutate(iris, LongPetalo_cm=Petal.Length/100)
+head(mutar1, 3)
+
+mutar2<-mutate(iris, AnchoSepalo=ifelse(Petal.Width > 1.8, "Sépalo Ancho", "Sépalo Delgado"))
+head(mutar2, 3)
+```
+
+## Funciones comunes
+
+* `abs(x)` 
+* `sqrt(x)` 
+* `ceiling(x)` 
+* `floor(x)` 
+* `round(x,digits=n)` 
+* `signif(x,digits=n)` 
+* `cos(x), sin(x)`
+* `log(x)` Logaritmo natural
+* `log2(x)`, `log10(x)` 
+* `exp(x)` 
+
+Las demás funciones de R pueden ser usadas dentro de la instrucción mutate
+
+## Mutate con group_by
+
+```{r}
+# mutate(data, new_var1=[expression], new_var2=[expression])
+library(dplyr)
+
+mutar3<-mutate(group_by(iris,Species) , AnchoPetaloMax=max(Petal.Width))
+head(mutar1, 3)
+
+```
+
+## Summarize
+
+```{r}
+# summarize(data, new_var1=fun(var), new_var1=fun(var))
+library(dplyr)
+
+sumarize1<-summarize(iris , AnchoPetaloMax=max(Petal.Width))
+head(sumarize1, 3)
+
+```
+
+Algunas funciones útiles pueden ser: `mean()`, `sum()`, `max()`, `n()`, `n_distinct()`, etc.
+
+## Summarize con group_by
+```{r}
+# summarize(data, new_var1=[expression], new_var2=[expression])
+library(dplyr)
+
+sumarize1<-mutate(group_by(iris,Species) , LargoPetaloProm=mean(Petal.Length), LargoPetaloMax=max(Petal.Length))
+head(sumarize1, 3)
+
+```
+
+## Encadenamiento de Funciones
+
+El paquete dplyr hereda el operador  ` %>% ` llamado "pipe", permite encadenar funciones pasando como primer parámetro a la función escrita a su derecha el resultado de la función al lado izquierdo.
+
+```{r, eval=FALSE}
+# summarize(data, new_var1=[expression], new_var2=[expression])
+new_data <- iris %>% 
+  filter() %>% 
+  select() %>%
+  mutate() %>% 
+  arrange() %>% 
+  rename() %>% 
+  group_by() %>% 
+  summarize() %>% 
+
+```
+
+## Encadenamiento de Funciones
+
+Con el encadenamiento de variables es posible reducir la cantidad de código escrita para una manupulación de datos. Por ejemplo se podría pasar de
+
+```{r, eval=FALSE}
+res1 <- filter(flights, origin=="JFK")
+res2 <- mutate(res1, speed=distance / (air_time), Distancia=ifelse(distance < 700, "Short", "Long"))
+res3 <- select(res2, origin, dest, distance, speed, Distancia)
+res4 <- arrange(res3, desc(speed))
+res5 <- group_by(res4, origin, dest,distance, Distancia)
+res6 <- summarise(res5, MeanSpeed=mean(speed, na.rm = T))
+```
+
+## Encadenamiento de Funciones
+
+o esto
+
+```{r, eval=FALSE}
+Forma2 <- summarise(
+  group_by(
+    arrange(
+      select(
+        mutate(
+          filter(
+            flights, origin=="JFK"),
+          speed=distance / (air_time),
+          Distancia=ifelse(distance < 700, "Short", "Long")), 
+        origin, dest, distance, speed, Distancia), desc(speed)), 
+    origin, dest,distance, Distancia), MeanSpeed=mean(speed, na.rm = T))
+```
+
+## Encadenamiento de Funciones
+
+A una escritura muchos legible y limpia:
+
+
+```{r, eval=FALSE}
+Forma3<- flights %>% 
+  filter(origin=="JFK") %>% 
+  mutate(speed=distance / (air_time), Distancia=ifelse(distance < 700, "Short", "Long")) %>% 
+  select(origin, dest, distance, speed, Distancia) %>%  
+  arrange(desc(speed)) %>% 
+  group_by(origin, dest,distance, Distancia) %>%
+  summarise(MeanSpeed=mean(speed, na.rm = T))
+```
+
+## Tidyr
+
+Los verbos de tidyr son:
+
+* `gather()` y `spread()` convierten la base de datos en formato ancho o largo
+* `separate()` y `unite()` separa una única columna en múltiples columnas o viceversa
+* `complete()` convierte los valores ausentes implícitos en valores explícitos completando las combinaciones ausentes.
+
+las funciones de tidyr pueden ser encadenadas junto con las funciones de dplyr
+
+## Gather y spread
+
+Permite transponer filas en columnas o viceversa:
+
+```{r}
+library(tidyr)
+messy <- data.frame(
+  name = c("Wilbur", "Petunia", "Gregory"),
+  a = c(67, 80, 64),
+  b = c(56, 90, 50)
+)
+messy
+```
+
+## Gather y spread
+
+```{r}
+messy %>%
+  gather(drug, heartrate, a:b)
+```
+
+
+En la [documentación de tidyr](https://cran.r-project.org/web/packages/tidyr/tidyr.pdf) se encuentran ejemplos y aplicaciones de las funciones 
+`separate()`, `unite()` y `complete()`
+
+
+# Union de Conjuntos de datos
+
+## Tipos de union
+
+Aunque el paquete base de R tiene una función para unir conjuntos de datos (`merge()`), dplyr cuenta con funciones más diversas y más legibles
+
+```{r, echo=FALSE, fig.align='center', out.width = "350px"}
+knitr::include_graphics("./img/joins.png")
+```
+
+## Ejemplos
+
+Los siguientes conjuntos de datos serán creados para probar los distintos tipos de joins.
+
+Es posible obtener la ayuda completa de los joins con `?left_join`
+
+```{r, warnings=FALSE, message=FALSE}
+df1 = data.frame(id=sample(1:5),x=rnorm(5))
+df2 = data.frame(id=sample(3:7),y=rnorm(5))
+df1;df2
+```
+
+
+## Left Join
+
+```{r, warnings=FALSE, message=FALSE}
+arrange(left_join(df1,df2),id)
+```
+
+## Inner Join
+
+```{r, warnings=FALSE, message=FALSE}
+arrange(inner_join(df1,df2),id)
+```
+
+## Semi Join
+
+```{r, warnings=FALSE, message=FALSE}
+arrange(semi_join(df1,df2),id)
+```
+
+## Full Join
+
+```{r, warnings=FALSE, message=FALSE}
+arrange(full_join(df1,df2),id)
+```
+
+## Anti Join
+
+```{r, warnings=FALSE, message=FALSE}
+arrange(anti_join(df1,df2),id)
+```
+
