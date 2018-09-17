@@ -1,0 +1,182 @@
+---
+title       : Introducción a R
+subtitle    : Expresiones Regulares
+author      : Inteligencia de Negocios
+date        : "`r format(Sys.time(), '%d %B %Y')`"
+logo        : logo.png
+css         : style.css
+output      : 
+  ioslides_presentation:
+    widescreen: true
+    transition: slower
+    smaller: true
+    smart: true
+---
+
+```{r setup, cache = F, echo = F, message = F, warning = F, tidy = F}
+library(knitr)
+library(dplyr)
+options(width = 100)
+opts_chunk$set(message = F, error = F, warning = F, comment = NA, fig.align = 'center', dpi = 100, tidy = F, cache.path = '.cache/', fig.path = 'fig/', cache=TRUE)
+
+options(xtable.type = 'html')
+knit_hooks$set(inline = function(x) {
+  if(is.numeric(x)) {
+    round(x, getOption('digits'))
+  } else {
+    paste(as.character(x), collapse = ', ')
+  }
+})
+knit_hooks$set(plot = knitr:::hook_plot_html)
+```
+
+## Expresiones Regulares
+
+- Pueden ser interpretadas como una combinación de literales y _metacaracteres_
+- Un literal pertenece a cierta _clase_
+- Para definir una analogía con el lenguaje natural, los literales son los elementos que forman las palabras (caracteres) y los metacaracteres definen la gramática.
+- Las expresiones regulares tienen un gran cantidad de metacaracteres, los cuales son útiles para capturar patrones.
+
+## Expresiones Regulares
+
+- El patrón más simple consiste solo en literales. 
+
+- Existen coincidencias (matches) si la secuencia de literales ocurre en algún ligar del texto
+
+- Cómo se lograría obtener la palabra 'profusa' o las oraciones que contengan la palabra 'día'
+
+- Para responder esta última pregunta es necesario usar metacaracteres.
+
+## Expresiones Regulares
+
+Los metacaracteres establecen formas para declarar:
+
+- Límites entre palabras (espacios en blanco)
+- Conjuntos de literales
+- El inicio y la finalización de una linea
+- Alternativas ('guerra' o 'paz')
+
+Cada metacaracter  `$ * + . ? [ ] ^ { } | ( ) \` tiene un significado específico que será descrito a continuación
+
+## Secuencias de Escape
+
+Existen caracteres especiales que no pueden ser directamente codificados en un cadena. Para referenciarlos es necesario "escapar" el caracter dentro del patrón anteponiendo  `\`. 
+
+```{r}
+paises <- c("Senegal", "Côte d'Ivoire", "Camerun")
+grep('\'', paises, value = TRUE)
+```
+
+## Secuencias de Escape
+
+Existen otros caracteres que requieren "escape", esta regla no solo aplica a expresiones regulares sino para todas las funciones de texto. Los caracteres que deben ser escapados son, [entre otros](https://stat.ethz.ch/R-manual/R-devel/library/base/html/Quotes.html): 
+
+* `\'`: Comillas sencilla. No es necesario escapar la comillas sencilla si se especifica entre comillas dobles. El ejemplo anterior podría haber sido hecho con `"'"`
+* `\"`: Comillas doble. Análogamente, `'"'` puede ser usado
+* `\n`: Salto de linea.
+* `\r`: Retorno (enter).
+* `\t`: tabulación.
+
+## Cuantificadores
+
+Especifica el número de repeticiones de un patrón
+
+* `*`: Coincide al menos cero veces.
+* `+`: Coincide al menos una vez.
+* `?`: Coincide máximo una vez.
+* `{n}`: Coincide exactamente `n` veces.
+* `{n,}`: Coincide al menos `n` veces.
+* `{n,m}`: Coincide entre `n` y `m` veces.
+
+## Cuantificadores
+
+```{r}
+str_cuant<-c("a", "ab", "acb", "accb", "acccb", "accccb")
+grep("ac*b", str_cuant, value = TRUE)
+grep("ac+b", str_cuant, value = TRUE)
+grep("ac?b", str_cuant, value = TRUE)
+```
+
+## Cuantificadores
+
+```{r}
+grep("ac{2}b", str_cuant, value = TRUE)
+grep("ac{2,}b", str_cuant, value = TRUE)
+grep("ac{2,3}b", str_cuant, value = TRUE)
+```
+
+## Posición del patrón dentro de la cadena
+
+* `^`: Indica el inicio de una cadena
+* `$`: Indica el final de una cadena
+* `\b`: Coincide con el borde de una palabra.
+* `\B`: Coincide con todo aquello que no sea el borde de una palabra.
+
+## Posición del patrón dentro de la cadena
+
+```{r}
+str_pos<-c("abcd", "cdab", "cabd", "c abd")
+grep("ab", str_pos, value = TRUE)
+grep("^ab", str_pos, value = TRUE)
+grep("ab$", str_pos, value = TRUE)
+grep("\\bab", str_pos, value = TRUE)
+```
+
+## Operadores
+
+* `.`: Coincide con un como caracter
+* `[...]`: Lista de caracteres, coincide con cualquier caracter dentro de los corchetes cuadrados. También se puede usar `-` dentro de los corchetes para indicar un rango de caracteres.
+* `[^...]`: Lista de caracteres invertida, similar a `[...]`, pero coincide cualquier caracter excepto los indicados dentro de los corchetes.
+* `\`: Suprime el significado de los metacaracteres en la expresión regular. Similar a las secuencias de escape. Ya que `\` debe ser escapado en R, se debe escapar: `\\$`.
+* `|`: Operador lógico o, coincide con los patrones listados a cualquier lado de `|`.
+* `(...)`: Agrupaciones en expresiones regulares. Permite obtener los grupos de caracteres que coincidieron con la expresión regular. Cada grupo se puede referenciar mediante `\\N`, con `N` siendo el número de `(...)` usado. Este operador se conoce como `backreference`
+
+## Operadores
+
+```{r}
+str_op<-c("^ab", "ab", "abc", "abd", "abe", "ab 12")
+grep("ab.", str_op, value = TRUE)
+grep("ab[c-e]", str_op, value = TRUE)
+grep("ab[^c]", str_op, value = TRUE)
+grep("^ab", str_op, value = TRUE)
+```
+
+## Operadores
+
+```{r}
+grep("\\^ab", str_op, value = TRUE)
+grep("abc|abd", str_op, value = TRUE)
+gsub("(ab) 12", "\\1 34", str_op)
+```
+
+## Clases de Caracteres
+
+Las clases de caracteres permiten especificar listas enteras de números, letras, etc. 
+
+* `[:digit:]` o `\d`: dígitos, `0 1 2 3 4 5 6 7 8 9`, equivalente a `[0-9]`.
+* `\D`: no dígitos, equivalente a `[^0-9]`.
+* `[:lower:]`: minúsculas, equivalente a `[a-z]`.
+* `[:upper:]`: mayúsculas, equivalente a `[A-Z]`.
+* `[:alpha:]`: caractereres alfabéticos, equivalente a  `[[:lower:][:upper:]]` o `[A-z]`.
+* `[:alnum:]`: caracteres alfanuméricos, equivalente a  `[[:alpha:][:digit:]]` o `[A-z0-9]`.
+* `\w`: palabras  `[[:alnum:]_]` o `[A-z0-9_]`.
+* `\W`: no palabra  `[^A-z0-9_]`.
+* `[:xdigit:]`: dígitos hexadecimales, `0 1 2 3 4 5 6 7 8 9 A B C D E F a b c d e f`, equivalente a   `[0-9A-Fa-f]`.
+
+## Clases de Caracteres
+
+* `[:blank:]`: caracteres vacíos, e.j. espacio y tabulación.
+* `[:space:]`: espacios: tabulación, salto de linea, tabulación vertical, retorno (enter), espacio.
+* `\s`: espacio, " " .
+* `\S`: no espacio.
+* `[:punct:]`: caracteres de puntuación, `! " # $ % & ' ( ) * + , - . / : ; < = > ? @ [  ] ^ _ ' { | } ~`.
+* `[:graph:]`: caracteres gráficos,  `[[:alnum:][:punct:]]`.
+* `[:print:]`: caracteres imprimibles, equivalente a  `[[:alnum:][:punct:]\\s]`.
+* `[:cntrl:]`: caracteres de control  `\n` o `\r`, `[\x00-\x1F\x7F]`.
+
+## Notas
+
+* Las expresiones regulares no solo funcionan en R, de hecho, R hereda la funcionalidad del lenguaje `pearl`.
+* La mayoría de lenguajes heredan estas funcionalidades por lo cual son ampliamente usadas.
+* Construir la expresión regular adecuada puede ser complejo. Por esta razón existen [páginas](https://regexr.com/) que simulan los resultados de cada expresión.
+* Existen [cheatsheets](https://www.rstudio.com/wp-content/uploads/2016/09/RegExCheatsheet.pdf) que resumen la funcionalidad de las expresiones regulares

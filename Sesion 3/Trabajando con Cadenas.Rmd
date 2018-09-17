@@ -1,0 +1,147 @@
+---
+title       : Introducción a R
+subtitle    : Trabajando con Cadenas
+author      : Inteligencia de Negocios
+date        : "`r format(Sys.time(), '%d %B %Y')`"
+logo        : logo.png
+css         : style.css
+output      : 
+  ioslides_presentation:
+    widescreen: true
+    transition: slower
+    smaller: true
+    smart: true
+---
+
+```{r setup, cache = F, echo = F, message = F, warning = F, tidy = F}
+library(knitr)
+library(dplyr)
+options(width = 100)
+opts_chunk$set(message = F, error = F, warning = F, comment = NA, fig.align = 'center', dpi = 100, tidy = F, cache.path = '.cache/', fig.path = 'fig/', cache=TRUE)
+
+options(xtable.type = 'html')
+knit_hooks$set(inline = function(x) {
+  if(is.numeric(x)) {
+    round(x, getOption('digits'))
+  } else {
+    paste(as.character(x), collapse = ', ')
+  }
+})
+knit_hooks$set(plot = knitr:::hook_plot_html)
+```
+
+# Tratamiento de Cadenas de Caracteres
+
+## Cargue de datos de Ejemplo
+
+```{r}
+library(data.table)
+cameraData <- fread("./data/cameras.csv")
+head(cameraData)
+```
+
+## Funciones capitalización
+
+Las funciones `toupper()` y `tolower()` permiten cambiar la capitalización de una cadena de caracteres a mayúscula o minúscula respectivamente.
+
+```{r, dependson="reviewDownload"}
+names(cameraData)
+tolower(names(cameraData))
+names(cameraData)<-tolower(names(cameraData))
+```
+
+El paquete `stringr` tiene la función `str_to_title(x)` que convierte las cedas en formato de título, es decir, la primera letra de cada palabra en mayúscula.
+
+## Funciones de reemplazo
+
+La función [`sub()`](http://www.datasciencemadesimple.com/sub-gsub-function-in-r/) reemplaza la primera ocurrencia de un patrón en una cadena de caracteres
+
+`sub(patron, reemplazo, Cadena)`
+
+Se eliminarán los espacios de los nombres de las columnas de la base de datos.
+
+```{r, dependson="reviewDownload"}
+names(cameraData)
+names(cameraData)<-sub(" ","",names(cameraData))
+```
+
+## Extensión  la funcion sub()
+
+La función [`gsub()`](http://www.datasciencemadesimple.com/sub-gsub-function-in-r/) reemplaza todas las ocurrencias de un patrón en una cadena de caracteres
+
+`gsub(patron, reemplazo, Cadena)`
+
+```{r, dependson="reviewDownload"}
+prueba <- "esto_es_una_prueba"
+sub("_","",prueba)
+gsub("_","",prueba)
+```
+
+## Encontrar valores - grep(),grepl()
+
+```{r}
+head(cameraData, 8)
+```
+
+
+## Encontrar valores - grep(),grepl()
+
+```{r}
+# ?grep
+grep("Alameda",cameraData$intersection)
+table(grepl("Alameda",cameraData$intersection))
+cameraData2 <- cameraData %>% filter(!grepl("Alameda",intersection))
+```
+
+## Encontrar valores - grep(),grepl()
+
+```{r}
+head(cameraData2, 5)
+```
+
+
+## Encontrar valores - grep(),grepl()
+
+```{r}
+grep("Alameda",cameraData$intersection,value=TRUE)
+grep("El Dorado",cameraData$intersection)
+length(grep("El Dorado",cameraData$intersection))
+```
+
+## Otras funciones útles
+
+Las librerías [`stringr`](https://cran.r-project.org/web/packages/stringr/stringr.pdf) y [`stringi`](https://cran.r-project.org/web/packages/stringi/stringi.pdf) contiene una gran cantidad de funciones de gran utilidad para la manipulación de cadenas de caracteres.
+
+```{r}
+library(stringr)
+nchar("Colsubsidio, con todo lo que te mereces")
+substr("Colsubsidio, con todo lo que te mereces",1,7)
+```
+
+## Otras funciones útles
+
+```{r}
+paste("Colsubsidio","con todo lo que te mereces")
+paste("Colsubsidio","con todo lo que te mereces", sep="|")
+```
+
+## Otras funciones útles
+
+```{r}
+paste0("Colsubsidio","con todo lo que te mereces")
+str_trim("Colsubsidio      ")
+```
+
+## Notas
+
+Los nombres de las variables deberían ser:
+
+* En minúscula siempre que sea posible.
+* Descriptivas (Diagnostico en lugar de Dx)
+* Sin duplicados
+* No debe tener espacios o caracteres especiales
+
+Variables con valores textuales:
+
+* Dependiendo de la aplicación, se aconseja almacenarlos como factores.
+* Deben ser plenamente descriptivos (Hombre/Mujer en lugar de F/M o 1/0)
